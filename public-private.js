@@ -30,19 +30,24 @@ class Account {
         if (pin_entered === this.#pin) {
             const total_balance = this.#transactions.reduce((acc, cur) => acc + cur, 0);
             console.log(`Your total account balance is ${total_balance}`);
+            return this;                        // returning this just for chaining method 
         } else {
             console.log("Incorrect PIN");
+            return this;                                    // returning this just for chaining method 
         }
     }
 
     // Method to deposit an amount(puclic)
     deposit(amount) {
         this.#transaction_setter = amount;           // Use private setter to add deposit
+        return this;                                // returning this just for chaining method 
     }
 
     // Method to withdraw an amount(public)
     withdraw(amount) {
         this.#transaction_setter = -amount;
+        return this;                                    // returning this just for chaining method 
+
     }
 }
 
@@ -51,9 +56,11 @@ const person_1 = new Account("Faisal", 1929);
 person_1.deposit(200);
 person_1.withdraw(300);
 person_1.balance(1929);
-
 let statement = person_1.statement;
-
 console.log(statement);
+console.log(person_1);
 
-console.log(person_1); 
+
+// chaining method
+person_1.deposit(2000).withdraw(1000).deposit(2000).balance(1929);
+console.log(person_1.statement);
