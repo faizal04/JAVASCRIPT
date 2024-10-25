@@ -1,7 +1,6 @@
 'use strict';
 
-// prettier-ignore
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// prettier-ignoreconst months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const form = document.querySelector('.form');
 const containerWorkouts = document.querySelector('.workouts');
@@ -20,6 +19,11 @@ class Workout {
         this.duration = duration;
 
     }
+    _setdescription() {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        this.description = `${this.type[0].toUpperCase()}${this.type.slice(1)} on ${months[this.date.getMonth()]} ${this.date.getDate()}`
+
+    }
 }
 
 class Cycling extends Workout {
@@ -28,11 +32,14 @@ class Cycling extends Workout {
         super(coords, distance, duration);
         this.elevationGain = elevationGain;
         this.speedcalc();
+        this._setdescription();
+
 
     }
 
     speedcalc() {
-        this.speed = (this.distance / 60);
+        this.speed = this.distance / (this.duration / 60);
+        return this.speed;
     }
 }
 class running extends Workout {
@@ -41,6 +48,8 @@ class running extends Workout {
         super(coords, distance, duration);
         this.cadence = cadence;
         this.pacecalc();
+        this._setdescription();
+
     }
     pacecalc() {
         this.pace = this.duration / this.distance;
@@ -57,6 +66,7 @@ class app {
     #map
     #mapevent
     #workout_data = []
+
     constructor() {
         this._getposition();
         form.addEventListener("submit", this._newWorkout.bind(this));
@@ -92,75 +102,80 @@ class app {
         inputDistance.focus();
 
     }
+
+    ////////////////////////////////////////////////////    HIDE FORM PENDING        ///////////////////////////////////////////////
+
+    _hideForm(mapE) {
+        inputDistance.value = inputDuration.value = inputCadence.value = inputElevation.value =
+            '';
+
+        form.style.display = 'none';
+        form.classList.add('hidden');
+    }
+
+
+
     _toggleElevationField() {
         inputElevation.closest(".form__row").classList.toggle("form__row--hidden");
         inputCadence.closest(".form__row").classList.toggle("form__row--hidden");
 
 
     }
+
+
     _newWorkout(e) {
         const validInput = (...input) => input.every(imp => Number.isFinite(imp));
         const positive_valid_input = (...input) => input.every(imp => imp > 0);
-        const { lat, lng } = this.#mapevent.latlng;
-        let workout;
         e.preventDefault();
 
         // GET DATA FROM THE FORM
         const type = inputType.value;
         const distance = +inputDistance.value;
         const duration = +inputDuration.value;
+        const { lat, lng } = this.#mapevent.latlng;
+        let workout;
 
-
-        // CHECK DATA IS VALID OR NOT
-
-        //IF WORKOUT CYCLING CREATE CYCLING OBJECT 
         if (type === "cycling") {
             const elevation = +inputElevation.value;
+            console.log("cycling check");
+
             if (!validInput(distance, duration, elevation) || !positive_valid_input(distance, duration)) {
                 return alert("Inputs have to be +ve number");
             }
-            workout = new Cycling([lat, lng], distance, duration)
+            workout = new Cycling([lat, lng], distance, duration, elevation)
         }
 
-        // IF WORKOUT RUNNING CREATE RUNNING OBJECT 
-        if (type == "running") {
+        if (type === "running") {
             const cadence = +inputCadence.value;
+            console.log("running check");
+
             if (!validInput(distance, duration, cadence) || !positive_valid_input(distance, duration, cadence)) {
                 return alert("Inputs have to be +ve number");
             }
             workout = new running([lat, lng], distance, duration, cadence)
 
         }
+
+
+        // add new object to workout array
         this.#workout_data.push(workout)
-        form.classList.add("hidden");
 
-        console.log(this.#workout_data);
-        // ADD  NEW OBJECT TO WORKOUT ARRAY
+        // marker render
+        this._renderworkoutMarker(workout);
 
-
-
-        // RENDER WORKOUT ON THE MAP 
+        this._renderWorkout(workout);
+        this._hideForm();
 
 
 
-
-        //RENDER WORKOUT ON LIST 
-
-
-
-
-        // CLEAR INPUT FIELD + HIDE FORM
-
-
-        // RENDER WORKOUT MARKER FUNCTION CALL
-        this.renderworkoutMarker(workout)
 
         inputCadence.value = inputDistance.value = inputDuration.value = inputElevation.value = "";
 
 
 
     }
-    renderworkoutMarker(workout) {
+    // marker render
+    _renderworkoutMarker(workout) {
 
         L.marker(workout.coords).addTo(this.#map).bindPopup(L.popup({
             maxWidth: 250,
@@ -170,42 +185,61 @@ class app {
             className: `${workout.type}-popup`,
 
         })
-        ).setPopupContent("workout.").openPopup();
+        ).setPopupContent(`${workout.type} on ${workout.date.getDate()} `).openPopup();
     }
+
+
+    // render workout
+    _renderWorkout(workout) {
+
+
+        let html =
+            `<li class="workout workout--${workout.type}" data - id="${workout.id}" >
+    <h2 class="workout__title">${workout.description}</h2>
+    <div class="workout__details">
+      <span class="workout__icon">${workout.type === "running" ? "🏃‍♂️" : "🚴‍♀️"
+            }</span>
+      <span class="workout__value">${workout.distance}</span>
+      <span class="workout__unit">km</span>
+    </div >
+        <div class="workout__details">
+            <span class="workout__icon">⏱</span>
+            <span class="workout__value">${workout.duration}</span>
+            <span class="workout__unit">min</span>
+        </div>`;
+        if (workout.type === "running") {
+            html += ` <div class="workout__details">
+              <span class="workout__icon">⚡️</span>
+               <span class="workout__value">${workout.pace.toFixed(1)}</span>
+              <span class="workout__unit">min/km</span>
+            </div>
+            <div class="workout__details">
+              <span class="workout__icon">🦶🏼</span>
+              <span class="workout__value">${workout.cadence}</span>
+              <span class="workout__unit">spm</span>
+            </div>
+          </li>`;
+        }
+        else {
+            html += `     
+          <div class="workout__details">
+                  <span class="workout__icon">⚡️</span>
+                  <span class="workout__value">${workout.speed.toFixed(1)}</span>
+                  <span class="workout__unit">km/h</span>
+                </div>
+                <div class="workout__details">
+                  <span class="workout__icon">⛰</span>
+                  <span class="workout__value">${workout.elevationGain}</span>
+                  <span class="workout__unit">m</span>
+                </div>`
+        }
+
+        form.insertAdjacentHTML('afterend', html)
+    }
+
+
 }
 const mapobject = new app();
 
 
 
-
-// create element 
-const create_element_function = function () {
-
-
-    const container = document.querySelector(".workouts");
-    const fullhtml =
-        `<li class="workout workout--running" data-id="1234567890">
-<h2 class="workout__title">Running on April ${Workout.date}</h2>
-<div class="workout__details">
-  <span class="workout__icon">🏃‍♂️</span>
-  <span class="workout__value">${distance}</span>
-  <span class="workout__unit">km</span>
-</div>
-<div class="workout__details">
-  <span class="workout__icon">⏱</span>
-  <span class="workout__value">${duration}</span>
-  <span class="workout__unit">min</span>
-</div>
-<div class="workout__details">
-  <span class="workout__icon">⚡️</span>
-  <span class="workout__value">${pacecalc}</span>
-  <span class="workout__unit">min/km</span>
-</div>
-<div class="workout__details">
-  <span class="workout__icon">🦶🏼</span>
-  <span class="workout__value">178</span>
-  <span class="workout__unit">spm</span>
-</div>
-</li >`;
-    container.innerHTML = fullhtml;
-}
