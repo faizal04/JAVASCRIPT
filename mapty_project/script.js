@@ -58,9 +58,7 @@ class running extends Workout {
 
 }
 
-// const run1 = new running([32, 54], 50, 30, 32);
-// const cycle1 = new Cycling([32, 54], 50, 30, 32)
-// console.log(run1, cycle1);
+
 
 class app {
     #map
@@ -82,6 +80,7 @@ class app {
         console.log("getposition check");
 
     }
+
     _loadMap(position) {
         console.log("getposition check")
 
@@ -89,52 +88,42 @@ class app {
         const { longitude } = position.coords;
         const coords = [latitude, longitude]
         this.#map = L.map('map').setView(coords, 13);
-
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(this.#map);
-
         this.#map.on("click", this._showForm.bind(this))
     }
+
     _showForm(mapE) {
         this.#mapevent = mapE;
         form.classList.remove("hidden");
         inputDistance.focus();
-
     }
 
-    ////////////////////////////////////////////////////    HIDE FORM PENDING        ///////////////////////////////////////////////
-
-    _hideForm(mapE) {
+    _hideForm() {
         inputDistance.value = inputDuration.value = inputCadence.value = inputElevation.value =
             '';
 
         form.style.display = 'none';
         form.classList.add('hidden');
+        setTimeout(() => form.style.display = "grid", 1000);
     }
-
-
 
     _toggleElevationField() {
         inputElevation.closest(".form__row").classList.toggle("form__row--hidden");
         inputCadence.closest(".form__row").classList.toggle("form__row--hidden");
-
-
     }
-
 
     _newWorkout(e) {
         const validInput = (...input) => input.every(imp => Number.isFinite(imp));
         const positive_valid_input = (...input) => input.every(imp => imp > 0);
         e.preventDefault();
 
-        // GET DATA FROM THE FORM
         const type = inputType.value;
         const distance = +inputDistance.value;
         const duration = +inputDuration.value;
         const { lat, lng } = this.#mapevent.latlng;
         let workout;
-
         if (type === "cycling") {
             const elevation = +inputElevation.value;
             console.log("cycling check");
@@ -144,7 +133,6 @@ class app {
             }
             workout = new Cycling([lat, lng], distance, duration, elevation)
         }
-
         if (type === "running") {
             const cadence = +inputCadence.value;
             console.log("running check");
@@ -153,46 +141,27 @@ class app {
                 return alert("Inputs have to be +ve number");
             }
             workout = new running([lat, lng], distance, duration, cadence)
-
         }
-
-
-        // add new object to workout array
         this.#workout_data.push(workout)
-
-        // marker render
         this._renderworkoutMarker(workout);
-
         this._renderWorkout(workout);
         this._hideForm();
-
-
-
-
         inputCadence.value = inputDistance.value = inputDuration.value = inputElevation.value = "";
-
-
-
     }
-    // marker render
-    _renderworkoutMarker(workout) {
 
+    _renderworkoutMarker(workout) {
         L.marker(workout.coords).addTo(this.#map).bindPopup(L.popup({
             maxWidth: 250,
             minWidth: 100,
             autoClose: false,
             closeOnClick: false,
             className: `${workout.type}-popup`,
-
         })
-        ).setPopupContent(`${workout.type} on ${workout.date.getDate()} `).openPopup();
+        ).setPopupContent(`${workout.type === "running" ? "🏃‍♂️Running on" : "🚴‍♀️"
+            }`);
     }
 
-
-    // render workout
     _renderWorkout(workout) {
-
-
         let html =
             `<li class="workout workout--${workout.type}" data - id="${workout.id}" >
     <h2 class="workout__title">${workout.description}</h2>
@@ -233,11 +202,8 @@ class app {
                   <span class="workout__unit">m</span>
                 </div>`
         }
-
         form.insertAdjacentHTML('afterend', html)
     }
-
-
 }
 const mapobject = new app();
 
