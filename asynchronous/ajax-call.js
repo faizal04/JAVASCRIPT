@@ -1,5 +1,5 @@
 //old school way
-// think about it
+
 // Create a new instance of XMLHttpRequest to interact with servers
 const request = new XMLHttpRequest();
 
