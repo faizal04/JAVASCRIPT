@@ -36,16 +36,17 @@ const location_1 = async function () {
         return `this is nothing just a return string`;             // returning some data so we can check it outside
     } catch (err) {
         alert(err.message);
-        throw err                               // throwing err back so we can catch it outside also
+        throw err;                           // throwing err back so we can catch it outside also
     }
 }
 
 
 // reading return like this not gonna work because the asynchronous code is still fetching data and not completed yet the output will be promise..........
-let returnMessage = location_1();
-console.log(returnMessage);
+// let returnMessage = location_1();
+// console.log(returnMessage);
 
 // so we can handle it like that
-location_1().then(returnMessage => console.log(returnMessage));
+location_1().then(returnMessage => console.log(returnMessage)).catch(err => console.log("will work only we throw error back in the catch  section"));
 
-// hellow world this is nothing just frustation
+
+
